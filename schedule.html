@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Tool Schedule Dashboard</title>
+<script>/* MOCKUP CHANGE 4: theme set before first paint (no light flash). Same order as the end-of-page code: saved choice, then ?theme= overrides it; if neither, dark. */(function(){var r=document.documentElement,t=null;try{t=localStorage.getItem("ts-theme");}catch(e){}var q=new URLSearchParams(location.search).get("theme");if(q==="dark"||q==="light")t=q;r.dataset.theme=t||"dark";})();</script>
+<style>
+.viz-root{
+  color-scheme:light;
+  --bg:#f4f3f0; --surface-1:#fcfcfb; --surface-2:#f0efec; --line:#e2e1dc; --grid:#ebeae6;
+  --text-primary:#0b0b0b; --text-secondary:#52514e; --text-muted:#7a7974;
+  --series-1:#2a78d6; --series-1-soft:#cde2fb; --track:#e6e5e0;
+  --good:#0ca30c; --warning:#fab219; --serious:#ec835a; --critical:#d03b3b; --neutral:#9a9993;
+  --today:#d03b3b;
+}
+:root[data-theme="dark"] .viz-root{
+  color-scheme:dark;
+  --bg:#111110; --surface-1:#1a1a19; --surface-2:#232322; --line:#33332f; --grid:#2a2a27;
+  --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8e86;
+  --series-1:#3987e5; --series-1-soft:#184f95; --track:#2e2e2b; --neutral:#6f6e68; --today:#e66767;
+}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])) .viz-root{
+    color-scheme:dark;
+    --bg:#111110; --surface-1:#1a1a19; --surface-2:#232322; --line:#33332f; --grid:#2a2a27;
+    --text-primary:#f0efec; --text-secondary:#c3c2b7; --text-muted:#8f8e86;
+    --series-1:#3987e5; --series-1-soft:#184f95; --track:#2e2e2b; --neutral:#6f6e68; --today:#e66767;
+  }
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Segoe UI",system-ui,-apple-system,Arial,sans-serif;}
+.viz-root{background:var(--bg);color:var(--text-primary);min-height:100vh;padding:20px 24px 40px;font-size:14px}
+header{display:flex;flex-wrap:wrap;align-items:flex-end;justify-content:space-between;gap:12px;margin-bottom:18px}
+h1{font-size:22px;margin:0 0 4px;font-weight:650;letter-spacing:-.01em}
+.sub{color:var(--text-secondary);font-size:13px}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden;background:var(--surface-1)}
+.seg button{border:0;background:none;color:var(--text-secondary);padding:7px 12px;font:inherit;font-size:13px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--surface-2);color:var(--text-primary);font-weight:600}
+input[type=search]{border:1px solid var(--line);background:var(--surface-1);color:var(--text-primary);border-radius:8px;padding:7px 10px;font:inherit;font-size:13px;width:150px}
+.iconbtn{border:1px solid var(--line);background:var(--surface-1);color:var(--text-secondary);border-radius:8px;padding:7px 10px;cursor:pointer;font:inherit;font-size:13px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:16px}
+.card{background:var(--surface-1);border:1px solid var(--line);border-radius:12px;padding:14px 16px}
+.kpi .label{font-size:12px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.04em}
+.kpi .value{font-size:30px;font-weight:650;margin-top:4px;font-variant-numeric:tabular-nums}
+.kpi .note{font-size:12px;color:var(--text-muted);margin-top:2px}
+.grid2{display:grid;grid-template-columns:minmax(0,2.2fr) minmax(280px,1fr);gap:12px;margin-bottom:16px}
+.grid2>*{min-width:0}
+@media (max-width:980px){.grid2{grid-template-columns:minmax(0,1fr)}}
+@media (max-width:520px){.viz-root{padding:14px 12px 30px}.upc li{grid-template-columns:54px 40px 1fr;}.upc li .pill{grid-column:2/4;justify-self:start}}
+.card h2{font-size:14px;margin:0 0 10px;font-weight:650}
+.card h2 span{color:var(--text-muted);font-weight:400}
+.legend{display:flex;flex-wrap:wrap;gap:14px;font-size:12px;color:var(--text-secondary);margin:-2px 0 8px}
+.legend i{display:inline-block;vertical-align:-1px;margin-right:5px}
+.pill{display:inline-flex;align-items:center;gap:5px;font-size:12px;font-weight:600;padding:2px 8px;border-radius:999px;border:1px solid var(--line);background:var(--surface-2);white-space:nowrap;color:var(--text-primary)}
+.pill .dot{width:8px;height:8px;border-radius:50%}
+.pill svg{width:11px;height:11px}
+#timeline{width:100%;overflow-x:auto}
+#timeline svg{display:block}
+.upc{list-style:none;margin:0;padding:0}
+.upc li{display:grid;grid-template-columns:62px 46px 1fr auto;gap:8px;align-items:center;padding:8px 0;border-top:1px solid var(--grid);font-size:13px}
+.upc li:first-child{border-top:0}
+.upc .d{font-variant-numeric:tabular-nums;color:var(--text-secondary)}
+.upc .t{font-weight:650}
+.upc .m{color:var(--text-secondary)}
+.empty{color:var(--text-muted);font-size:13px;padding:8px 0}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{text-align:left;font-weight:600;color:var(--text-secondary);font-size:12px;padding:8px 8px;border-bottom:1px solid var(--line);white-space:nowrap;cursor:pointer;user-select:none}
+th.sorted::after{content:" ▾";color:var(--text-muted)}
+th.sorted.asc::after{content:" ▴"}
+td{padding:9px 8px;border-bottom:1px solid var(--grid);vertical-align:top}
+td.num,th.num{font-variant-numeric:tabular-nums;white-space:nowrap}
+.tool{font-weight:700}
+.bar{display:flex;align-items:center;gap:8px;min-width:120px}
+.bar .trk{flex:1;height:8px;background:var(--track);border-radius:4px;overflow:hidden}
+.bar .fill{height:100%;background:var(--series-1);border-radius:4px}
+.bar .v{width:36px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600}
+.prog{color:var(--text-secondary);max-width:520px;line-height:1.4}
+.prog .flag{color:var(--text-primary);font-weight:600}
+.foot{color:var(--text-muted);font-size:12px;margin-top:12px;line-height:1.5}
+.clock{display:none}
+.upc li.more{display:block;color:var(--text-muted);font-size:12px}
+/* ---------- TV view: one screen, no scrolling ---------- */
+.viz-root.tv{height:100vh;overflow:hidden;display:flex;flex-direction:column;padding:1.8vh 1.6vw 1.6vh;font-size:1.7vh}
+.tv header{margin-bottom:1.4vh;align-items:center}
+.tv h1{font-size:3.6vh;margin:0 0 .3vh}
+.tv .sub{font-size:1.65vh}
+.tv .clock{display:block;margin-left:auto;font-size:2.6vh;font-weight:650;font-variant-numeric:tabular-nums;color:var(--text-primary)}
+.tv .controls .seg,.tv #q{display:none}
+.tv .iconbtn{font-size:1.4vh;padding:.6vh .7vw;opacity:.55}
+.tv .kpis{grid-template-columns:repeat(5,minmax(0,1fr));gap:1vw;margin-bottom:1.4vh}
+.tv .card{padding:1.3vh 1vw;border-radius:1.2vh}
+.tv .kpi .label{font-size:1.45vh}
+.tv .kpi .value{font-size:4.6vh;margin-top:.3vh}
+.tv .kpi .note{font-size:1.4vh}
+.tv .grid2{flex:1;min-height:0;grid-template-columns:minmax(0,2.55fr) minmax(0,1fr);gap:1vw;margin:0}
+.tv .grid2>.card{display:flex;flex-direction:column;min-height:0;overflow:hidden}
+.tv .card h2{font-size:2.1vh;margin-bottom:.8vh}
+.tv .legend{font-size:1.5vh;margin-bottom:.6vh;gap:1.4vw}
+.tv .legend svg{height:1.4vh;width:auto}
+.tv #timeline{flex:1;min-height:0;overflow:hidden}
+.tv .upc{flex:1;min-height:0;overflow:hidden}
+.tv .upc li{font-size:1.8vh;padding:.8vh 0;grid-template-columns:4.2em 3em minmax(0,1fr) auto;gap:.5vw;white-space:nowrap}
+.tv .upc li .m{overflow:hidden;text-overflow:ellipsis}
+.tv .upc li.more{font-size:1.6vh}
+.tv .pill{font-size:1.45vh;padding:.25vh .6vw}
+.tv .pill svg{width:1.3vh;height:1.3vh}
+.tv #allTools{display:none}
+.framed .controls{display:none}
+/* MOCKUP CHANGE 2 - hover pop-up colours only (size, padding, font, content unchanged).
+   Was: background var(--surface-1), color var(--text-primary), border var(--line). #tip sits OUTSIDE .viz-root,
+   where those variables are not defined, so the box was transparent with default black text on the dark page.
+   Now: fixed light panel + near-black text; the status-pill colours are defined on #tip so the icons show. */
+#tip{--good:#0a7a0a;--warning:#8a5a00;--critical:#b42525;--series-1:#1d5fb8;--neutral:#5c5b56;
+     --line:#9fb3cc;--surface-2:#e6eaf0;--text-primary:#111111;
+     position:fixed;pointer-events:none;background:#F5F7FA;color:#111111;border:1px solid #3987e5;border-radius:8px;padding:8px 10px;font-size:12px;box-shadow:0 4px 16px rgba(0,0,0,.6);display:none;max-width:280px;z-index:5;line-height:1.45}
+#tip b{font-size:13px;color:#000000}
+.tblwrap{overflow-x:auto}
+
+/* MOCKUP CHANGE 1 - colour on the progress header (title + "Progress from ..." line). Colour only:
+   the 10/14px inner padding is cancelled by equal negative margins, so the title, sub-line, buttons
+   and everything below stay exactly where they are today. */
+header{background:linear-gradient(90deg,#0b2545 0%,#15406e 60%,#16304f 100%);border:1px solid #275d97;border-top:4px solid #3987e5;
+       border-radius:12px;padding:10px 14px;margin:-14px -15px 7px}
+.tv header{margin:-14px -15px calc(1.4vh - 11px)}
+header h1{color:#ffffff}
+header .sub{color:#b9d8ff}
+.tv header .clock{color:#ffffff}
+header .seg,header .iconbtn,header input[type=search]{background:#0b2545;border-color:#3b6ea5}
+header .seg button,header .iconbtn{color:#d6e6fb}
+header .seg button[aria-pressed="true"]{background:#1f4f82;color:#ffffff}
+header input[type=search]{color:#ffffff}
+header input[type=search]::placeholder{color:#9fb7d3}
+
+/* MOCKUP CHANGE 3 - thin labelled dividers between Target Window groups (colours per window; light theme = darker ink) */
+.viz-root{--band-1:#7a3b00;--band-2:#5a32a0;--band-3:#005a66;--band-x:#4f4e4a}
+:root[data-theme="dark"] .viz-root{--band-1:#f2a65a;--band-2:#c4a3ff;--band-3:#5fd0e3;--band-x:#a9a89f}
+@media (prefers-color-scheme: dark){
+  :root:where(:not([data-theme="light"])) .viz-root{--band-1:#f2a65a;--band-2:#c4a3ff;--band-3:#5fd0e3;--band-x:#a9a89f}
+}
+.bandrow td{padding:10px 8px 3px;border-bottom:2px solid var(--bc);color:var(--bc);font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase}
+.bandrow td span{color:var(--text-muted);font-weight:400;text-transform:none;letter-spacing:0;margin-left:8px}
+</style>
+</head>
+<body>
+<div class="viz-root">
+  <header>
+    <div>
+      <h1>Tool Completion Schedule</h1>
+      <div class="sub" id="sub"></div>
+    </div>
+    <div class="clock" id="clock"></div>
+    <div class="controls">
+      <div class="seg" id="winSeg" role="group" aria-label="Target window"></div>
+      <input type="search" id="q" placeholder="Find a tool" aria-label="Find a tool">
+      <button class="iconbtn" id="tvbtn" title="Full-screen view for a wall TV">▭ TV view</button>
+      <button class="iconbtn" id="theme" title="Switch light / dark">◐ Theme</button>
+    </div>
+  </header>
+
+  <section class="kpis" id="kpis"></section>
+
+  <section class="grid2">
+    <div class="card">
+      <h2>Timeline <span>· ES 0.5, ES 1.0 and FS by tool, sorted by first date · tick numbers are Mondays</span></h2>
+      <div class="legend" id="tlLegend"></div>
+      <div id="timeline"></div>
+    </div>
+    <div class="card">
+      <h2>Next 21 days <span>· upcoming milestones</span></h2>
+      <ul class="upc" id="upc"></ul>
+    </div>
+  </section>
+
+  <section class="card" id="allTools">
+    <h2>All tools <span id="count"></span></h2>
+    <div class="tblwrap"><table id="tbl"></table></div>
+    <div class="foot" id="foot"></div>
+  </section>
+</div>
+<div id="tip" role="tooltip"></div>
+
+<script>
+const DATA = window.__SCHEDULE_DATA__ || {"tracker": "MICRON_Tool_Tracker_FOR_SUITS_R67.xlsx", "feed_date": "11/4/2026", "refreshed": "2026-11-06 04:41", "tools": [{"tool": "2DE", "window": "Before Thanksgiving", "dates": {"ES 0.5": "2026-11-10", "ES 1.0": "2026-11-13", "FS": "2026-11-19"}, "notes": null, "pct": 1.0, "state": "complete", "testing": 100.0, "progress": "DDFD. Bulk 100%, PV 100%, Spec Gas 100%, DIW/UPW 100%, Drains 100%, PCW 100%, Evac 100%. Testing 100%."}, {"tool": "23B", "window": "Before Thanksgiving", "dates": {"ES 0.5": "2026-11-10", "ES 1.0": "2026-11-19", "FS": "N/A"}, "notes": null, "pct": 0.23, "state": "active", "testing": 6.0, "progress": "PV 100%, PCW 90%. Testing 6%."}, {"tool": "2G6", "window": "Before Thanksgiving", "dates": {"ES 0.5": "2026-11-19", "ES 1.0": "2026-11-23", "FS": "N/A"}, "notes": null, "pct": 0.0, "state": "demo_only", "testing": null, "progress": "Only carried as a demo on the tracker (RELO T&M); demo not marked complete. No hook-up row yet."}, {"tool": "2FP", "window": "Before Thanksgiving", "dates": {"ES 0.5": "2026-11-19", "ES 1.0": "2026-11-23", "FS": "2026-12-01"}, "notes": null, "pct": 0.43, "state": "active", "testing": 29.0, "progress": "PV 100% CDA 50%, DIW/UPW 60%, Drains 70%, PCW 100%. Testing 29%. Field: Bulk: Fab not Ready and tool not set; Spec Gas: Fab not ready.Need to Demo a wall for tool install; Chem: This is our biggest chem scope/Tool not installed in fab."}, {"tool": "88D", "window": "Before Thanksgiving", "dates": {"ES 0.5": "2026-11-19", "ES 1.0": "2026-12-01", "FS": "2026-12-07"}, "notes": null, "pct": 0.1, "state": "active", "testing": 0.0, "progress": "PV 70%, Drains 15%. Field: Drains: 11/4/26 core drill complete 15%."}, {"tool": "28D", "window": "Before Thanksgiving", "dates": {"ES 0.5": "2026-11-19", "ES 1.0": "2026-11-23", "FS": "2026-12-01"}, "notes": null, "pct": 1.0, "state": "complete", "testing": 100.0, "progress": "DDFD. Bulk 50%, CDA 40% / PV 80%, Spec Gas 100%, Chem 50%, DIW/UPW 95%, Drains 95%, PCW 100%. Testing 100%. Field: Bulk: tool is not set and theres a ERT Barricade is sub fab that is keeping us from\u2026; PV/CDA: PV 95% 11/5/26 ready to test; Chem: PGMEA In VMB Is the chem scope 1ET/DELAY because of the active leak. Check: shown as 100% on Glenn's Tab, but Bulk, PV/CDA, Chem, DIW/UPW, Drains still below 100% on the system tabs."}, {"tool": "3AM", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-02", "ES 1.0": "N/A", "FS": "N/A"}, "notes": "RELO to B201", "pct": 0.08, "state": "active", "testing": 0.0, "progress": "PV 70%. Field: PV/CDA: 11/4/26 70% tool to move to building 201."}, {"tool": "26V", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-14", "ES 1.0": "2026-12-17", "FS": "2026-12-22"}, "notes": null, "pct": 0.67, "state": "active", "testing": 21.0, "progress": "Bulk 50%, PV 75% CDA 75%, Spec Gas 60%, Chem 50%, DIW/UPW 90%, Drains 50%, PCW 100%. Testing 21%. Field: Bulk: tubbing is up too pop out; PV/CDA: PV11/4/26 75% tool not installed; Spec Gas: CO2 Single line spec gas."}, {"tool": "E35", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-15", "ES 1.0": "2026-12-17", "FS": "2026-12-23"}, "notes": "Possible pull into next week", "pct": 0.0, "state": "demo_only", "testing": null, "progress": "Only carried as a demo on the tracker (RELO T&M); demo not marked complete. No hook-up row yet."}, {"tool": "905", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-15", "ES 1.0": "2026-12-17", "FS": "2026-12-23"}, "notes": null, "pct": 0.0, "state": "demo_only", "testing": null, "progress": "Only carried as a demo on the tracker (RELO T&M); demo not marked complete. No hook-up row yet."}, {"tool": "40S", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-16", "ES 1.0": "2026-12-18", "FS": "2026-12-28"}, "notes": null, "pct": 0.16, "state": "active", "testing": 6.0, "progress": "PV 95%, DIW/UPW 35%. Testing 6%."}, {"tool": "90D", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-14", "ES 1.0": "2026-12-22", "FS": "2026-12-30"}, "notes": null, "pct": 0.65, "state": "active", "testing": 21.0, "progress": "Bulk 60%, PV 85% / CDA 50%, Spec Gas 100%, Chem 50%, DIW/UPW 80%, Drains 50%, PCW 50%. Testing 21%. Field: PV/CDA: 11/4/26 85% tool not set; DIW/UPW: tool not installed or chillers; Drains: 11/4/26 no tool installed 50%."}, {"tool": "52D", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-17", "ES 1.0": "2026-12-29", "FS": "2027-01-05"}, "notes": null, "pct": 0.14, "state": "active", "testing": 0.0, "progress": "PV 70%, PCW 30%. Field: DIW/UPW: no Drawings 7/9/26; Drains: BOM complete 10/28/26."}, {"tool": "759", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-18", "ES 1.0": "2026-12-30", "FS": "2027-01-06"}, "notes": null, "pct": 0.46, "state": "active", "testing": 0.0, "progress": "Bulk 20%, PV 70%, Spec Gas 20%, Chem 100%, Drains 25%, PCW 40%, Evac 50%. Field: Bulk: 201 area/7 HPN2 lines; PV/CDA: 201 area/1 cda line, PV 70% 11/4/26; Spec Gas: 201 area 4-VMBs in sub fab/ 2 -1EAA."}, {"tool": "2F6", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-21", "ES 1.0": "2026-12-31", "FS": "2027-01-07"}, "notes": null, "pct": 0.59, "state": "active", "testing": 7.0, "progress": "Bulk 50%, PV 75% CDA 50%, Spec Gas 20%, Chem 100%, Drains 75%, PCW 85%, Evac 25%. Testing 7%. Field: Bulk: 201 area /Big tool need good route for top and bottom; PV/CDA: PV 75% 11/4/26 tool not installed; Spec Gas: 201 area 5-VMBs in sub fab/1-1EAA."}, {"tool": "2FQ", "window": "Before Christmas", "dates": {"ES 0.5": "2026-12-22", "ES 1.0": "2026-12-28", "FS": "2027-01-04"}, "notes": null, "pct": 0.08, "state": "active", "testing": 0.0, "progress": "PV 70%. Field: DIW/UPW: 9/3 - No IFC Drawing in ACC; Evac: 9/24 BOM have been submitted."}, {"tool": "70Y", "window": "Before Christmas", "dates": {"ES 0.5": "Unknown", "ES 1.0": "Unknown", "FS": "Unknown"}, "notes": "Unknown at this time", "pct": 0.75, "state": "active", "testing": 46.0, "progress": "Bulk 60%, CDA 100% / PV 100%, Spec Gas 20%, Chem 100%, Drains 75%, PCW 95%, Evac 80%. Testing 46%. Field: Bulk: lotto installed /work in progress/tool not set in fab; Spec Gas: Tool in position/schmacher in postion/ozoniser not set in subfab; Drains: 11/4/26 80% (DAW) tools not set, (LSR 100%), Pumps, ozonizers not set."}, {"tool": "L59", "window": "After Holidays", "dates": {"ES 0.5": "2027-01-04", "ES 1.0": "2027-01-06", "FS": "2027-01-12"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: DIW/UPW: Demo IFCs only 7/9/26; Drains: Demo IFCs only 10/28/26 no scope."}, {"tool": "H25", "window": "After Holidays", "dates": {"ES 0.5": "2027-01-05", "ES 1.0": "2027-01-13", "FS": "2027-01-20"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: DIW/UPW: 9/3 - No Tool install IFC on ACC, Demo Drawing only; Drains: BOM complete 11/4/26; PCW: no drawings 7/9/26."}, {"tool": "E51", "window": "After Holidays", "dates": {"ES 0.5": "2027-01-19", "ES 1.0": "2027-01-27", "FS": "2027-02-02"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: Drains: BOM complete 10/28/26."}, {"tool": "F28", "window": "After Holidays", "dates": {"ES 0.5": "2027-01-22", "ES 1.0": "2027-01-26", "FS": "2027-02-01"}, "notes": null, "pct": 0.0, "state": "demo_only", "testing": null, "progress": "Only carried as a demo on the tracker (RELO T&M); demo not marked complete. No hook-up row yet."}, {"tool": "363", "window": "After Holidays", "dates": {"ES 0.5": "2027-01-22", "ES 1.0": "2027-02-01", "FS": "2027-02-05"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: Bulk: 9/29/26 - BOM Complete; PV/CDA: 11/4/26 - BOM Complete; Evac: 9/26 Working on BOM."}, {"tool": "229", "window": "After Holidays", "dates": {"ES 0.5": "2027-02-01", "ES 1.0": "2027-02-09", "FS": "2027-02-16"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: Bulk: 9/29 - No IFC drawing for tool install; Chem: 9/1 - No IFC drawing for tool install; DIW/UPW: no drawings 7/9/26. 9/29 - No IFC drawing for tool install."}, {"tool": "2DQ", "window": "After Holidays", "dates": {"ES 0.5": "2027-02-01", "ES 1.0": "2027-02-09", "FS": "2027-02-16"}, "notes": null, "pct": null, "state": "not_tracked", "testing": null, "progress": "Not on the tracker's hook-up tabs."}, {"tool": "34S", "window": "After Holidays", "dates": {"ES 0.5": "2027-02-08", "ES 1.0": "2027-02-08", "FS": "2027-02-08"}, "notes": null, "pct": 0.0, "state": "active", "testing": 12.0, "progress": "Chem 100%. Testing 12%."}, {"tool": "L33", "window": "After Holidays", "dates": {"ES 0.5": "2027-02-23", "ES 1.0": "2027-02-25", "FS": "2027-03-03"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: DIW/UPW: no Drawings 7/9/26; Drains: Demo IFCs only 10/28/26 no scope."}, {"tool": "BB5", "window": "After Holidays", "dates": {"ES 0.5": "2027-02-18", "ES 1.0": "2027-02-26", "FS": "2027-03-04"}, "notes": null, "pct": 0.0, "state": "active", "testing": 0.0, "progress": "No system progress entered yet. Field: Bulk: 9/9 - Demo Drawing only, No IFC drawing for tool install; PV/CDA: BOM complete PV 11/4/26; DIW/UPW: 9/9 - Demo Drawing only, No IFC drawing for tool install 9/26 - Woking on BOM."}], "xlsx_updated": true};
+
+const STATUS = {
+  complete:   {label:"Complete",      color:"var(--good)",     icon:'<path d="M2 6.5l2.5 2.5L10 3" fill="none" stroke="currentColor" stroke-width="2"/>', rank:5},
+  ontrack:    {label:"On track",      color:"var(--series-1)", icon:'<circle cx="6" cy="6" r="3" fill="currentColor"/>', rank:4},
+  watch:      {label:"Watch",         color:"var(--warning)",  icon:'<path d="M6 2v5M6 9.2v.8" stroke="currentColor" stroke-width="2"/>', rank:2},
+  risk:       {label:"At risk",       color:"var(--critical)", icon:'<path d="M6 1.5L11 10.5H1z" fill="currentColor"/>', rank:1},
+  nodata:     {label:"No hook-up data", short:"No data",color:"var(--neutral)", icon:'<path d="M3 6h6" stroke="currentColor" stroke-width="2"/>', rank:3},
+  removed:    {label:"Removed",       color:"var(--neutral)",  icon:'<path d="M3 3l6 6M9 3l-6 6" stroke="currentColor" stroke-width="2"/>', rank:6},
+};
+const MS = ["ES 0.5","ES 1.0","FS"];
+const DAY = 864e5;
+const today = (()=>{const d=new Date(); d.setHours(0,0,0,0); return d;})();
+const parse = s => (s && /^\d{4}-\d{2}-\d{2}/.test(s)) ? new Date(s+"T00:00:00") : null;
+const fmt = d => d ? (d.getMonth()+1)+"/"+d.getDate()+"/"+String(d.getFullYear()).slice(2) : "";
+const fmtShort = d => d.toLocaleDateString("en-US",{month:"short",day:"numeric"});
+const esc = s => String(s??"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* MOCKUP CHANGE 3 - group by the workbook's "Target Window" (data-driven). Known windows keep this order;
+   any other window value is added after them in first-seen order; tools with no window go last as "Not on schedule". */
+const BAND_ORDER = ["Before Thanksgiving","Before Christmas","After Holidays"];
+const BAND_COLOR = ["var(--band-1)","var(--band-2)","var(--band-3)"];
+const NO_WIN = "Not on schedule";
+const winOf = t => t.window || NO_WIN;
+const bandColor = w => { const i = BAND_ORDER.indexOf(w); return i >= 0 ? BAND_COLOR[i] : "var(--band-x)"; };
+function banded(list, cmp){
+  const seen = [...new Set(list.map(winOf))];
+  const order = [...BAND_ORDER.filter(w=>seen.includes(w)), ...seen.filter(w=>!BAND_ORDER.includes(w) && w!==NO_WIN), ...(seen.includes(NO_WIN)?[NO_WIN]:[])];
+  return order.map(w=>({w, c:bandColor(w), rows:list.filter(t=>winOf(t)===w).sort(cmp)}));
+}
+
+function statusOf(t){
+  if (t.state==="removed") return "removed";
+  if ((t.pct??0) >= 1 || t.state==="complete") return "complete";
+  if (t.state==="not_tracked" || t.state==="demo_only") return "nodata";
+  const dates = MS.map(m=>parse(t.dates[m])).filter(Boolean);
+  if (!dates.length) return "ontrack";
+  const next = dates.find(d=>d>=today);
+  const first = dates[0];
+  const pct = t.pct||0;
+  if (!next) return "risk";                         // every milestone passed, not complete
+  const days = (first - today)/DAY;
+  if (first < today) return pct < .8 ? "risk" : "watch";  // ES 0.5 already passed
+  if (days <= 14) return pct < .5 ? "risk" : (pct < .8 ? "watch" : "ontrack");
+  if (days <= 30) return pct < .25 ? "watch" : "ontrack";
+  return "ontrack";
+}
+
+const tools = DATA.tools.map((t,i)=>{
+  const d = MS.map(m=>({m, d:parse(t.dates[m]), raw:t.dates[m]}));
+  const firstD = d.find(x=>x.d)?.d || null;
+  return {...t, i, ms:d, first:firstD, status:statusOf(t)};
+});
+
+const windows = ["All", ...[...new Set(tools.map(t=>t.window).filter(Boolean))]];
+let curWin = "All", q = "", sortKey = "first", sortAsc = true;
+const qs = new URLSearchParams(location.search);
+let TV = qs.has("tv") || location.hash === "#tv";
+
+function pill(st){
+  const s = STATUS[st];
+  return `<span class="pill"><svg viewBox="0 0 12 12" style="color:${s.color}" aria-hidden="true">${s.icon}</svg>${TV && s.short ? s.short : s.label}</span>`;
+}
+
+function visible(){
+  return tools.filter(t => (curWin==="All"||t.window===curWin) && (!q || t.tool.toUpperCase().includes(q)));
+}
+
+function renderHeader(){
+  document.getElementById("sub").textContent =
+    `Progress from ${DATA.tracker} · InSite feed ${DATA.feed_date||"n/a"} · refreshed ${DATA.refreshed}`;
+  const seg = document.getElementById("winSeg");
+  seg.innerHTML = windows.map(w=>`<button aria-pressed="${w===curWin}" data-w="${esc(w)}">${esc(w)}</button>`).join("");
+  seg.onclick = e => { const b=e.target.closest("button"); if(!b) return; curWin=b.dataset.w; render(); };
+}
+
+function renderKPIs(v){
+  const live = v.filter(t=>t.status!=="removed");
+  const withPct = live.filter(t=>t.pct!=null);
+  const avg = withPct.length ? withPct.reduce((a,t)=>a+t.pct,0)/withPct.length : 0;
+  const done = live.filter(t=>t.status==="complete").length;
+  const risk = live.filter(t=>t.status==="risk").length;
+  const watch = live.filter(t=>t.status==="watch").length;
+  const in14 = [];
+  live.forEach(t=>t.ms.forEach(m=>{ if(m.d && m.d>=today && (m.d-today)/DAY<=14) in14.push(m); }));
+  const k = [
+    ["Tools on schedule", live.length, curWin==="All"?"excluding removed":curWin],
+    ["Average complete", Math.round(avg*100)+"%", `${withPct.length} tools with tracker data`],
+    ["Complete", done, `${live.length-done} still open`],
+    ["At risk", risk, `${watch} more on watch`],
+    ["Milestones in 14 days", in14.length, "ES 0.5 / ES 1.0 / FS"],
+  ];
+  document.getElementById("kpis").innerHTML = k.map(([l,val,n])=>
+    `<div class="card kpi"><div class="label">${l}</div><div class="value">${val}</div><div class="note">${esc(n)}</div></div>`).join("");
+}
+
+const SHAPES = {
+  "ES 0.5": (x,y,r)=>`<circle cx="${x}" cy="${y}" r="${r}"/>`,
+  "ES 1.0": (x,y,r)=>`<path d="M${x} ${y-r-1}L${x+r+1} ${y}L${x} ${y+r+1}L${x-r-1} ${y}Z"/>`,
+  "FS":     (x,y,r)=>`<rect x="${x-r}" y="${y-r}" width="${2*r}" height="${2*r}" rx="1.5"/>`,
+};
+
+function renderTimeline(v){
+  /* MOCKUP CHANGE 3: same rows as before (dated tools), same first-date order, but grouped by target window */
+  const groups = banded(v.filter(t=>t.first), (a,b)=>(a.first-b.first) || (a.i-b.i));
+  const rows = groups.flatMap(g=>g.rows);
+  const gOf = groups.flatMap((g,gi)=>g.rows.map(()=>gi));
+  const DIV = 0.7;                                    // divider slot height, in rows
+  const box = document.getElementById("timeline");
+  document.getElementById("tlLegend").innerHTML =
+    MS.map(m=>`<span><svg width="14" height="14" viewBox="0 0 14 14" style="fill:var(--surface-1);stroke:var(--text-primary);stroke-width:1.6"><g>${SHAPES[m](7,7,4.5)}</g></svg> ${m}</span>`).join("") +
+    `<span><svg width="20" height="10" viewBox="0 0 20 10"><rect x="0" y="2" width="20" height="6" rx="3" fill="var(--series-1)"/></svg> ES 0.5 → FS span, filled to % complete</span>` +
+    `<span><svg width="10" height="12" viewBox="0 0 10 12"><line x1="5" y1="0" x2="5" y2="12" stroke="var(--today)" stroke-width="2" stroke-dasharray="3 2"/></svg> Today</span>`;
+  if (!rows.length){ box.innerHTML = '<div class="empty">No dated tools in this view.</div>'; return; }
+  const all = rows.flatMap(t=>t.ms.map(m=>m.d).filter(Boolean)).concat([today]);
+  let min = new Date(Math.min(...all)), max = new Date(Math.max(...all));
+  min = new Date(min.getFullYear(), min.getMonth(), 1);
+  max = new Date(max.getFullYear(), max.getMonth()+1, 1);
+  // TV view scales everything to the screen; normal view uses fixed sizes and scrolls
+  const f = TV ? Math.max(0.55, innerHeight/1080 * 1.3) : 1;
+  const fs = n => (n*f).toFixed(1);
+  const W = TV ? box.clientWidth : Math.max(box.clientWidth, 640);
+  const L = 104*f, R = 16, T = 46*f, foot = 24*f;
+  const units = rows.length + groups.length*DIV;      // MOCKUP CHANGE 3: room for the dividers
+  const rowH = TV ? Math.max(8, (box.clientHeight - T - foot) / units) : 24;
+  const H = T + units*rowH + foot;
+  /* MOCKUP CHANGE 3: text scale taken from today's row height (no dividers), so row text stays the same size */
+  const rowH0 = TV ? Math.max(8, (box.clientHeight - T - foot) / Math.max(rows.length,1)) : 24;
+  const rf = Math.min(f, rowH0/19);            // row text never taller than the row
+  const rs = n => (n*rf).toFixed(1);
+  const mr = TV ? Math.min(5.5*f, rowH*0.3) : 4.5, bar = TV ? Math.min(8*f, rowH*0.3) : 6;
+  const x = d => L + (d-min)/(max-min)*(W-L-R);
+  const pxPerDay = (W-L-R)/((max-min)/DAY);
+  let s = `<svg width="${W}" height="${H}" role="img" aria-label="Timeline of tool milestones">`;
+  // weekly ticks (Mondays), labelled with the day of the month
+  const mon = new Date(min); mon.setDate(mon.getDate() + ((8 - mon.getDay()) % 7));
+  const every = pxPerDay*7 < 22*f ? 2 : 1;
+  for (let d=new Date(mon), n=0; d<max; d=new Date(d.getFullYear(), d.getMonth(), d.getDate()+7), n++){
+    const xx = x(d);
+    s += `<line x1="${xx}" y1="${T-6*f}" x2="${xx}" y2="${H-foot+4}" stroke="var(--grid)" stroke-dasharray="2 3"/>`;
+    if (n % every === 0) s += `<text x="${xx}" y="${T-10*f}" font-size="${fs(10)}" text-anchor="middle" fill="var(--text-muted)">${d.getDate()}</text>`;
+  }
+  // month boundaries, labelled "November 2026"
+  for (let m=new Date(min); m<max; m=new Date(m.getFullYear(), m.getMonth()+1, 1)){
+    const xx = x(m), next = new Date(m.getFullYear(), m.getMonth()+1, 1);
+    const wide = x(next) - xx > 90*f;
+    s += `<line x1="${xx}" y1="4" x2="${xx}" y2="${H-foot+4}" stroke="var(--line)"/>`;
+    s += `<text x="${xx+5}" y="${15*f}" font-size="${fs(11)}" font-weight="600" fill="var(--text-secondary)">${m.toLocaleDateString("en-US",{month: wide?"long":"short", year:"numeric"})}</text>`;
+  }
+  s += `<line x1="${x(max)}" y1="4" x2="${x(max)}" y2="${H-foot+4}" stroke="var(--line)"/>`;
+  /* MOCKUP CHANGE 3: thin labelled divider above each target-window group
+     (rules drawn here; labels drawn after the Today line so they sit on top of it) */
+  let bandLabels = "";
+  groups.forEach((g,gi)=>{
+    const start = rows.indexOf(g.rows[0]);
+    const yb = T + (start + gi*DIV)*rowH, ln = yb + DIV*rowH - 1;
+    s += `<line x1="0" y1="${ln.toFixed(1)}" x2="${W}" y2="${ln.toFixed(1)}" stroke="${g.c}" stroke-width="1.5"/>`;
+    const nodate = v.filter(t=>!t.first && winOf(t)===g.w).map(t=>t.tool);   // tools in this window the timeline can't plot
+    bandLabels += `<text x="4" y="${(ln-4*rf).toFixed(1)}" font-size="${rs(11)}" font-weight="700" letter-spacing=".06em" fill="${g.c}" stroke="var(--surface-1)" stroke-width="3" paint-order="stroke">${esc(g.w.toUpperCase())} · ${g.rows.length} tool${g.rows.length===1?"":"s"}${nodate.length?` <tspan font-weight="400" letter-spacing="0">(+ ${esc(nodate.join(", "))}: no dates)</tspan>`:""}</text>`;
+  });
+  rows.forEach((t,i)=>{
+    const y = T + (i + (gOf[i]+1)*DIV)*rowH + rowH/2;   // MOCKUP CHANGE 3: shifted down past its group's divider
+    const st = STATUS[t.status];
+    const ic = 12*rf;
+    s += `<g class="row" data-i="${t.i}">`;
+    if (i % 2) s += `<rect x="0" y="${y-rowH/2}" width="${W}" height="${rowH}" fill="var(--surface-2)" opacity=".55"/>`;
+    else s += `<rect x="0" y="${y-rowH/2}" width="${W}" height="${rowH}" fill="transparent"/>`;
+    s += `<svg x="4" y="${y-ic/2}" width="${ic}" height="${ic}" viewBox="0 0 12 12" style="color:${st.color}" aria-hidden="true">${st.icon}</svg>`;
+    s += `<text x="${8+ic}" y="${y+4*rf}" font-size="${rs(12)}" font-weight="700" fill="var(--text-primary)">${esc(t.tool)}</text>`;
+    s += `<text x="${L-8}" y="${y+4*rf}" font-size="${rs(11)}" text-anchor="end" fill="var(--text-secondary)">${t.pct==null?"—":Math.round(t.pct*100)+"%"}</text>`;
+    const ds = t.ms.filter(m=>m.d);
+    const a = x(ds[0].d), b = x(ds[ds.length-1].d);
+    if (b-a > 1){
+      s += `<rect x="${a}" y="${y-bar/2}" width="${b-a}" height="${bar}" rx="${bar/2}" fill="var(--series-1-soft)"/>`;
+      if (t.pct) s += `<rect x="${a}" y="${y-bar/2}" width="${(b-a)*Math.min(t.pct,1)}" height="${bar}" rx="${bar/2}" fill="var(--series-1)"/>`;
+    }
+    ds.forEach(m=>{
+      s += `<g fill="var(--surface-1)" stroke="var(--text-primary)" stroke-width="${(1.6*Math.min(f,1.6)).toFixed(1)}" data-m="${m.m}">${SHAPES[m.m](x(m.d),y,mr)}</g>`;
+    });
+    s += `</g>`;
+  });
+  const tx = x(today);
+  s += `<line x1="${tx}" y1="${T-6*f}" x2="${tx}" y2="${H-foot+4}" stroke="var(--today)" stroke-width="${2*Math.min(f,1.5)}" stroke-dasharray="4 3"/>`;
+  s += `<text x="${tx}" y="${H-6*f}" font-size="${fs(11)}" font-weight="600" text-anchor="middle" fill="var(--text-primary)">Today · ${today.toLocaleDateString("en-US",{month:"short",day:"numeric",year:"numeric"})}</text>`;
+  s += bandLabels;                                     // MOCKUP CHANGE 3: divider labels on top of the Today line
+  s += `</svg>`;
+  box.innerHTML = s;
+  box.querySelectorAll("g.row").forEach(g=>{
+    g.addEventListener("mousemove", e=>showTip(e, tools[+g.dataset.i]));
+    g.addEventListener("mouseleave", hideTip);
+  });
+}
+
+const tip = document.getElementById("tip");
+function showTip(e,t){
+  tip.innerHTML = `<b>${esc(t.tool)}</b> · ${pill(t.status)}<br>` +
+    `${t.pct==null?"No % on tracker":Math.round(t.pct*100)+"% complete"}<br>` +
+    t.ms.map(m=>`${m.m}: ${m.d?m.d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric"}):esc(m.raw||"—")}`).join("<br>") + "<br>" +
+    (t.notes?`<br><i>${esc(t.notes)}</i>`:"");
+  tip.style.display="block";
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  let left = e.clientX+14, top = e.clientY+14;
+  if (left+w > innerWidth-8) left = e.clientX-w-14;
+  if (top+h > innerHeight-8) top = e.clientY-h-14;
+  tip.style.left=left+"px"; tip.style.top=top+"px";
+}
+function hideTip(){ tip.style.display="none"; }
+
+function renderUpcoming(v){
+  const items = [];
+  v.forEach(t=>{ if(t.status==="removed") return; t.ms.forEach(m=>{ if(m.d && m.d>=today && (m.d-today)/DAY<=21) items.push({t,m}); }); });
+  items.sort((a,b)=>a.m.d-b.m.d);
+  const el = document.getElementById("upc");
+  el.innerHTML = items.length ? items.map(({t,m})=>{
+    const days = Math.round((m.d-today)/DAY);
+    return `<li><span class="d">${fmtShort(m.d)}</span><span class="t">${esc(t.tool)}</span><span class="m">${m.m} · ${days===0?"today":(TV?days+"d":"in "+days+"d")} · ${t.pct==null?"—":Math.round(t.pct*100)+"%"}</span>${pill(t.status)}</li>`;
+  }).join("") : '<li class="empty">Nothing due in the next 21 days for this view.</li>';
+  if (TV && items.length){
+    let shown = items.length;
+    while (el.scrollHeight > el.clientHeight + 1 && el.children.length > 1){ el.lastElementChild.remove(); shown--; }
+    if (shown < items.length){
+      if (el.children.length > 1) el.lastElementChild.remove(), shown--;
+      el.insertAdjacentHTML("beforeend", `<li class="more">+ ${items.length-shown} more in the next 21 days</li>`);
+    }
+  }
+}
+
+const COLS = [
+  {k:"tool", h:"Tool"},
+  {k:"status", h:"Status"},
+  {k:"pct", h:"% Complete"},
+  {k:"window", h:"Target window"},
+  {k:"ES 0.5", h:"ES 0.5", num:true},
+  {k:"ES 1.0", h:"ES 1.0", num:true},
+  {k:"FS", h:"FS", num:true},
+  {k:"progress", h:"Tracker progress", nosort:true},
+];
+function sortVal(t,k){
+  if (k==="status") return STATUS[t.status].rank;
+  if (k==="pct") return t.pct==null?-1:t.pct;
+  if (k==="first") return t.first?+t.first:9e15;
+  if (MS.includes(k)) { const m=t.ms.find(x=>x.m===k); return m.d?+m.d:9e15; }
+  return String(t[k]??"");
+}
+function renderTable(v){
+  const rows = [...v].sort((a,b)=>{ const A=sortVal(a,sortKey),B=sortVal(b,sortKey); return (A>B?1:A<B?-1:a.i-b.i)*(sortAsc?1:-1); });
+  document.getElementById("count").textContent = `· ${rows.length} tools`;
+  const th = COLS.map(c=>`<th data-k="${c.k}" class="${c.num?"num ":""}${sortKey===c.k?"sorted"+(sortAsc?" asc":""):""}">${c.h}</th>`).join("");
+  /* MOCKUP CHANGE 3: in the default order (first date) the table is split into target-window groups with a
+     thin labelled divider row; clicking any column header gives the plain sorted table exactly as today. */
+  const groups = sortKey==="first" ? banded(v, (a,b)=>{ const A=sortVal(a,sortKey),B=sortVal(b,sortKey); return (A>B?1:A<B?-1:a.i-b.i)*(sortAsc?1:-1); })
+                                   : [{w:null, rows}];
+  const body = groups.map(g=>(g.w===null ? "" :
+    `<tr class="bandrow" style="--bc:${g.c}"><td colspan="${COLS.length}">${esc(g.w)}<span>${g.rows.length} tool${g.rows.length===1?"":"s"}</span></td></tr>`) +
+    g.rows.map(t=>{
+    const pct = t.pct==null ? `<span style="color:var(--text-muted)">${t.status==="removed"?"N/A":"Not tracked"}</span>` :
+      `<div class="bar"><div class="trk"><div class="fill" style="width:${Math.min(t.pct,1)*100}%"></div></div><span class="v">${Math.round(t.pct*100)}%</span></div>`;
+    const prog = esc(t.progress).replace(/(Check:[^]*$)/, '<span class="flag">$1</span>');
+    return `<tr><td class="tool">${esc(t.tool)}</td><td>${pill(t.status)}</td><td>${pct}</td><td>${esc(t.window||"")}</td>` +
+      t.ms.map(m=>`<td class="num">${m.d?fmt(m.d):esc(m.raw||"")}</td>`).join("") +
+      `<td class="prog">${prog}${t.notes?`<div style="color:var(--text-muted);margin-top:3px">Schedule note: ${esc(t.notes)}</div>`:""}</td></tr>`;
+  }).join("")).join("");
+  const tbl = document.getElementById("tbl");
+  tbl.innerHTML = `<thead><tr>${th}</tr></thead><tbody>${body}</tbody>`;
+  tbl.querySelectorAll("th").forEach(h=>{ if (COLS.find(c=>c.k===h.dataset.k).nosort) return;
+    h.onclick=()=>{ if(sortKey===h.dataset.k) sortAsc=!sortAsc; else {sortKey=h.dataset.k; sortAsc=true;} renderTable(visible()); }; });
+  document.getElementById("foot").innerHTML =
+    "<b>How status is set</b> (from % complete and the first milestone date, recalculated each day): " +
+    "<b>Complete</b> = 100% / DDFD on the tracker. <b>At risk</b> = ES 0.5 within 14 days and under 50%, or ES 0.5 already passed and under 80%. " +
+    "<b>Watch</b> = ES 0.5 within 14 days and 50–79%, or within 30 days and under 25%. <b>No hook-up data</b> = tool is only on the tracker as a demo, or not on it. " +
+    "Schedule dates come from the Tool Schedule workbook; % and progress come from Glenn's Tab and the system tabs.";
+}
+
+function applyTV(){
+  document.querySelector(".viz-root").classList.toggle("tv", TV);
+  let framed = false; try { framed = window.top !== window.self; } catch(e) { framed = true; }
+  document.querySelector(".viz-root").classList.toggle("framed", TV && framed);
+  document.getElementById("tvbtn").textContent = TV ? "✕ Exit TV view" : "▭ TV view";
+  const c = document.getElementById("clock");
+  c.textContent = TV ? new Date().toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}) : "";
+}
+function render(){
+  applyTV();
+  renderHeader();
+  const v = visible();
+  renderKPIs(v); renderTimeline(v); renderUpcoming(v); renderTable(v);
+}
+document.getElementById("q").addEventListener("input", e=>{ q=e.target.value.trim().toUpperCase(); render(); });
+document.getElementById("theme").onclick = ()=>{
+  const r=document.documentElement;
+  const dark = r.dataset.theme ? r.dataset.theme==="dark" : matchMedia("(prefers-color-scheme: dark)").matches;
+  r.dataset.theme = dark ? "light" : "dark";
+  try{ localStorage.setItem("ts-theme", r.dataset.theme); }catch(e){}
+};
+try{ const s=localStorage.getItem("ts-theme"); if(s) document.documentElement.dataset.theme=s; }catch(e){}
+{ const th = qs.get("theme"); if (th==="dark"||th==="light") document.documentElement.dataset.theme = th; }
+let rT; addEventListener("resize", ()=>{ clearTimeout(rT); rT=setTimeout(()=>{ const v=visible(); renderTimeline(v); renderUpcoming(v); },150); });
+document.getElementById("tvbtn").onclick = ()=>{
+  TV = !TV;
+  const u = new URL(location.href); u.hash = "";
+  if (TV) u.searchParams.set("tv","1"); else u.searchParams.delete("tv");
+  try { history.replaceState(null, "", u); } catch(e) {}
+  if (TV && document.documentElement.requestFullscreen) document.documentElement.requestFullscreen().catch(()=>{});
+  render();
+};
+addEventListener("keydown", e=>{ if (e.key==="Escape" && TV) document.getElementById("tvbtn").click(); });
+// TV: keep the clock moving and pick up new data every 15 minutes
+setInterval(()=>{ if (TV) applyTV(); }, 30000);
+setInterval(()=>{ if (TV) location.reload(); }, 900000);
+render();
+</script>
+</body>
+</html>
