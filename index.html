@@ -32,9 +32,9 @@
 <div id="dots" aria-hidden="true"><i></i><i></i></div>
 <script>
 (function () {
-  var SHOW = 'schedule';           // 'schedule' = tool schedule only, 'board' = material board only, 'both' = take turns
+  var SHOW = 'both';               // 'schedule' = tool schedule only, 'board' = material board only, 'both' = take turns (2026-11-09: Matthew 'Go live')
   var SECONDS = [60, 60];          // when SHOW is 'both': [material board, tool schedule]
-  var SRC = ['board.html', 'schedule.html?tv=1&theme=dark'];
+  var SRC = ['board.html?view=tv', 'schedule.html?tv=1&theme=dark'];   // ?view=tv = the material board's TV layout (without it the frame shows the desktop table)
   var frames = [document.getElementById('f0'), document.getElementById('f1')];
   var dots = document.querySelectorAll('#dots i');
   var cur = SHOW === 'schedule' ? 1 : 0;
