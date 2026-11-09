@@ -2147,7 +2147,7 @@
                     "r67":  {
                                 "file":  "MICRON_Tool_Tracker_FOR_SUITS_R67.xlsx",
                                 "path":  "MICRON_Tool_Tracker_FOR_SUITS_R67.xlsx",
-                                "sha256":  "0B58C23D51F11A810ECA496F4A362253F9E68C6FCEC1669E5E28AFFB6571D0F5",
+                                "sha256":  "8CBBF9A3B8E18955F9CAC881D9C2FC124C9096F172DE1B9826224DAB7E5AB653",
                                 "use":  "DDFD status only: Glenn\u0027s Tab column O on the hook-up row (frozen copy, OpenXML)"
                             },
                     "schedule":  {
@@ -2159,9 +2159,9 @@
                                      "use":  "tile order only (read-only, OpenXML)"
                                  }
                 },
-    "builder_sha256":  "455799EEA2A5063586F1A596814D351EC24C0C4D3573F15EE7751D490F65F61F",
-    "built_at":  "2026-11-09T04:47:18",
-    "built_at_text":  "Nov 9, 2026, 4:47 AM",
+    "builder_sha256":  "E7C7D0F0F5F8D7CA11C4802935C76666B4B1355ABA5AA7359D3D3101AA50DAF8",
+    "built_at":  "2026-11-09T05:13:57",
+    "built_at_text":  "Nov 9, 2026, 5:13 AM",
     "counts":  {
                    "tools":  39,
                    "schedule_only_tiles":  5,
@@ -2272,6 +2272,14 @@
                                          "r67_row":  30,
                                          "project":  "",
                                          "board_tool":  "25X",
+                                         "on_board":  true,
+                                         "removed":  false
+                                     },
+                                     {
+                                         "r67_tool":  "23B",
+                                         "r67_row":  45,
+                                         "project":  "C-0051193 (NOVUS)",
+                                         "board_tool":  "23B",
                                          "on_board":  true,
                                          "removed":  false
                                      },
@@ -2567,6 +2575,7 @@
                                                    ],
                  "green_tiles":  [
                                      "2DE",
+                                     "23B",
                                      "28D",
                                      "12X",
                                      "25X",
@@ -3064,7 +3073,13 @@
                                      "basis":  "Before Thanksgiving (Thanksgiving 2026 is Thu 2026-11-26; \"before Thanksgiving\" = by Wed 2026-11-25)",
                                      "on_schedule":  true
                                  },
-                      "ddfd":  null
+                      "ddfd":  {
+                                   "status":  "DDFD",
+                                   "r67_row":  45,
+                                   "r67_tool":  "23B",
+                                   "project":  "C-0051193 (NOVUS)",
+                                   "source":  "R67 Glenn\u0027s Tab row 45, column O"
+                               }
                   },
                   {
                       "order":  3,
