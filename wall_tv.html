@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#0d0f12">
+<title>TC Boiler Wall Display (TV)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #0d0f12; overflow: hidden; }
+  iframe { position: fixed; inset: 0; width: 100%; height: 100%; border: 0; }
+</style>
+</head>
+<body>
+<!-- TV wrapper for the WOLFHEAD wall display (2026-11-09). wall.html is shown unchanged inside this frame (Matthew: "keep the
+     dashboard the same make no changes just set it up to display remotely"). This top page never reloads, so the Silk
+     browser's toolbar stays hidden; only the frame is reloaded. wall.html's own 5-minute self-reload runs inside the frame. -->
+<iframe id="f" title="TC Boiler wall display" src="wall.html"></iframe>
+<script>
+(function () {
+  var SRC = 'wall.html';
+  var frame = document.getElementById('f');
+  // Change check, copied from the TV rotator's frame-reload fix (2026-11-07). Never a full-page reload:
+  //  - the version stamp (ETag, else Last-Modified) of wall.html is normalized (GitHub serves it in two forms, e.g. W/"abc" and
+  //    "abc"; ETag and Last-Modified are never compared with each other);
+  //  - a new stamp must be seen on 2 checks in a row before anything happens;
+  //  - on a confirmed change, and every 6 hours, ONLY the frame is reloaded.
+  var CHECK_MS = 120000, CONFIRM = 2, FRAME_RELOAD_MS = 21600000;
+  var tm = /[?&]checkms=(\d+)/.exec(location.search); if (tm) CHECK_MS = Math.max(1000, +tm[1]);   // test hook (scratch tests only)
+  var LOG = []; function log(e) { LOG.push(e); document.body.setAttribute('data-log', JSON.stringify(LOG.slice(-20))); }
+  function norm(s) { return s ? String(s).trim().replace(/^W\//i, '').replace(/^"+|"+$/g, '').replace(/[-;]+(gzip|br|deflate)$/i, '').toLowerCase() : ''; }
+  function stamp(r) { var e = norm(r.headers.get('etag')), m = norm(r.headers.get('last-modified')); return e ? 'e:' + e : (m ? 'm:' + m : ''); }
+  function reloadFrame(why) { frame.src = SRC + '?_r=' + Date.now(); log(why); }
+  var v = '', pending = '', seen = 0;
+  function check() {
+    fetch(SRC, { method: 'HEAD', cache: 'no-store' }).then(function (r) {
+      var t = stamp(r); if (!t) return;
+      if (!v) { v = t; log('baseline'); return; }
+      if (t.charAt(0) !== v.charAt(0)) { log('stamp kind differs: ignored'); return; }   // etag vs last-modified: not comparable
+      if (t === v) { if (pending) log('change not confirmed: ignored'); pending = ''; seen = 0; return; }
+      if (t === pending) seen++; else { pending = t; seen = 1; log('new stamp seen 1'); }
+      if (seen >= CONFIRM) { v = t; pending = ''; seen = 0; reloadFrame('wall changed: frame reload'); }
+    }).catch(function () {});
+  }
+  check(); setInterval(check, CHECK_MS);
+  setInterval(function () { reloadFrame('6-hour frame reload'); }, FRAME_RELOAD_MS);
+})();
+</script>
+</body>
+</html>
