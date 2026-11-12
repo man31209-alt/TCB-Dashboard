@@ -41,8 +41,8 @@
                           "label":  "PO log / tracker pull",
                           "iso":  "2026-11-06T11:24",
                           "text":  "Fri Nov 6, 11:24 AM",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "QC passed (11-06 12:14)",
                           "note":  "tracker-received and ordered quantities",
@@ -53,8 +53,8 @@
                           "label":  "Sortly snapshot",
                           "iso":  "2026-11-06T06:40",
                           "text":  "Fri Nov 6, 6:40 AM",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "onsite basis (on hand)",
                           "note":  "Sortly on hand in tool folders",
@@ -65,7 +65,7 @@
                           "label":  "Sortly pick lists, data through",
                           "iso":  "2026-10-30T00:00",
                           "text":  "Fri Oct 30",
-                          "age_working_days":  6,
+                          "age_working_days":  9,
                           "stale":  true,
                           "missing":  false,
                           "status":  "file saved 11-03 14:21; picks after this date are missing",
@@ -77,8 +77,8 @@
                           "label":  "Comparison build",
                           "iso":  "2026-11-07T10:53",
                           "text":  "Sat Nov 7, 10:53 AM",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "QC passed, QA confirmed (R5g)",
                           "note":  "BOM vs Received / onsite R5g",
@@ -89,8 +89,8 @@
                           "label":  "PO-inbox overlay cutoff",
                           "iso":  "2026-11-06T14:45",
                           "text":  "Fri Nov 6, 2:45 PM",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "released (QC passed, QA confirmed)",
                           "note":  "Rev 6, LIB-2026-1516",
@@ -101,8 +101,8 @@
                           "label":  "Mailbox sweep cutoff",
                           "iso":  "2026-11-06T15:43",
                           "text":  "Fri Nov 6, 3:43 PM",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "QA confirmed (Rev 2)",
                           "note":  "supplement Rev 2 (board-eligible rows)",
@@ -113,8 +113,8 @@
                           "label":  "Tool schedule (order) saved",
                           "iso":  "2026-11-07T12:51",
                           "text":  "Sat Nov 7, 12:51 PM",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "pinned 42802C75; slide order",
                           "note":  "tile order = Tool Completion Schedule timeline",
@@ -125,8 +125,8 @@
                           "label":  "Tool alias table (238 = 23B)",
                           "iso":  "2026-11-07T00:00",
                           "text":  "Sat Nov 7",
-                          "age_working_days":  1,
-                          "stale":  false,
+                          "age_working_days":  4,
+                          "stale":  true,
                           "missing":  false,
                           "status":  "the PM decision; pinned 7FBD841A",
                           "note":  "feed tool 238 shown as 23B",
@@ -137,7 +137,7 @@
                           "label":  "Novus long-lead list dated",
                           "iso":  "2026-10-26T00:00",
                           "text":  "Mon Oct 26",
-                          "age_working_days":  10,
+                          "age_working_days":  13,
                           "stale":  true,
                           "missing":  false,
                           "status":  "owner-furnished; email 11-04",
@@ -2043,7 +2043,7 @@
                     "by_tool_sources":  {
                                             "file":  "BOM vs Received comparison 2026-11-07 R5g - By tool.sources.csv",
                                             "path":  "BOM vs Received comparison 2026-11-07 R5g - By tool.sources.csv",
-                                            "sha256":  "928DD8FA0365951AF7213F30C727B5E3486CC2EEB74F2AF5EE190B222B450F62",
+                                            "sha256":  "D9ADB04D80AC3424F059AD3A10F78BF4F20682B7568F76B3979E5074A262F4B8",
                                             "status":  "QC passed, QA confirmed (R5g)"
                                         },
                     "comparison_stamps_checked":  [
@@ -2147,7 +2147,7 @@
                     "r67":  {
                                 "file":  "MICRON_Tool_Tracker_FOR_SUITS_R67.xlsx",
                                 "path":  "MICRON_Tool_Tracker_FOR_SUITS_R67.xlsx",
-                                "sha256":  "8CBBF9A3B8E18955F9CAC881D9C2FC124C9096F172DE1B9826224DAB7E5AB653",
+                                "sha256":  "9E9A4FED299D1C9001DE1FBAD35919B7AFEDE44BF267DC476BF70BA994514761",
                                 "use":  "DDFD status only: Glenn\u0027s Tab column O on the hook-up row (frozen copy, OpenXML)"
                             },
                     "schedule":  {
@@ -2160,8 +2160,8 @@
                                  }
                 },
     "builder_sha256":  "E7C7D0F0F5F8D7CA11C4802935C76666B4B1355ABA5AA7359D3D3101AA50DAF8",
-    "built_at":  "2026-11-09T05:13:57",
-    "built_at_text":  "Nov 9, 2026, 5:13 AM",
+    "built_at":  "2026-11-12T06:10:51",
+    "built_at_text":  "Nov 12, 2026, 6:10 AM",
     "counts":  {
                    "tools":  39,
                    "schedule_only_tiles":  5,
@@ -2225,14 +2225,6 @@
                                          "project":  "C-0051181",
                                          "board_tool":  "70X",
                                          "on_board":  false,
-                                         "removed":  false
-                                     },
-                                     {
-                                         "r67_tool":  "28D",
-                                         "r67_row":  18,
-                                         "project":  "C-0051160",
-                                         "board_tool":  "28D",
-                                         "on_board":  true,
                                          "removed":  false
                                      },
                                      {
@@ -2576,7 +2568,6 @@
                  "green_tiles":  [
                                      "2DE",
                                      "23B",
-                                     "28D",
                                      "12X",
                                      "25X",
                                      "28E",
@@ -4340,13 +4331,7 @@
                                      "basis":  "Before Thanksgiving (Thanksgiving 2026 is Thu 2026-11-26; \"before Thanksgiving\" = by Wed 2026-11-25)",
                                      "on_schedule":  true
                                  },
-                      "ddfd":  {
-                                   "status":  "DDFD",
-                                   "r67_row":  18,
-                                   "r67_tool":  "28D",
-                                   "project":  "C-0051160",
-                                   "source":  "R67 Glenn\u0027s Tab row 18, column O"
-                               }
+                      "ddfd":  null
                   },
                   {
                       "order":  7,
